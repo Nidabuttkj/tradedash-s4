@@ -1,0 +1,37 @@
+# Render Blueprint: creates the backend (API) and the frontend (static site) together.
+# Render dashboard -> New -> Blueprint -> pick your GitHub repo.
+# If your group repo has a different folder layout, change the two "rootDir" lines.
+services:
+  - type: web
+    name: tradesdash-api
+    runtime: node
+    rootDir: server
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false        # you type this in the Render dashboard (never commit it)
+      - key: CLIENT_ORIGIN
+        sync: false        # your website address, e.g. https://tradesdash-web.onrender.com
+
+  - type: web
+    name: tradesdash-web
+    runtime: static
+    rootDir: web
+    buildCommand: npm install --include=dev && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: VITE_API_URL
+        sync: false        # your API address, e.g. https://tradesdash-api.onrender.com
+    routes:
+      - type: rewrite      # lets /pricing work when the page is refreshed
+        source: /*
+        destination: /index.html
